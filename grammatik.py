@@ -1,8 +1,11 @@
 import json
 from enum import IntEnum
+from enum import Enum
 import random
 from dataclasses import dataclass
 import difflib
+from num2words import num2words
+from rapidfuzz import process, fuzz
 
 class Dictable:
     @classmethod
@@ -13,47 +16,47 @@ class Dictable:
             raise TypeError("wrong number of values")
         return {key: args[key] for key in cls}
 
-class casus(Dictable, IntEnum):
+class casus(int, Dictable, Enum):
     nominativ = 0
     genitiv = 1
     dativ = 2
     akkusativ = 3
-class numerus(Dictable, IntEnum):
+class numerus(int, Dictable, Enum):
     singular = 0
     plural = 1
-class person(Dictable, IntEnum):
+class person(int, Dictable, Enum):
     erste = 0
     zweite = 1
     dritte = 2
-class tempus(Dictable, IntEnum):
+class tempus(int, Dictable, Enum):
     präsens = 0
     präteritum = 1
     perfekt = 2
     plusquamperfekt = 3
     futur1 = 4
     futur2 = 5
-class genus(Dictable, IntEnum):
+class genus(int, Dictable, Enum):
     maskulin = 0
     feminin = 1
     neutrum = 2
-class determination(Dictable, IntEnum):
+class determination(int, Dictable, Enum):
     definit = 0
     indefinit = 1
-class modus(Dictable, IntEnum):
+class modus(int, Dictable, Enum):
     indikativ = 0
     konjunktiv1 = 1
     konjunktiv2 = 2
     imperativ = 3
-class genusverbi(Dictable, IntEnum):
+class genusverbi(int, Dictable, Enum):
     aktiv = 0
     passiv = 1
-class satz(Dictable, IntEnum):
+class satz(int, Dictable, Enum):
     hauptsatz = 0
     nebensatz = 1
-class hilfsverb(Dictable, IntEnum):
+class hilfsverb(int, Dictable, Enum):
     haben = 0
     sein = 1
-class komparation(Dictable, IntEnum):
+class komparation(int, Dictable, Enum):
     positiv = 0
     komparativ = 1
     superlativ = 2
@@ -70,6 +73,7 @@ class FP:
     genusverbi: genusverbi = None
     satz: satz = None
     komparation: komparation = None
+    stamm: bool = False
 
     def __iter__(self):
         for value in vars(self).values():
@@ -83,14 +87,16 @@ with open("data/adjektive.json", encoding = "utf8") as f:
     adjektive = json.loads(f.read())
 with open("data/verben.json", encoding = "utf8") as f:
     verben = json.loads(f.read())
-
 with open("data/verbenmitobjekt.json", encoding = "utf8") as f:
     verbenmitobjekt = json.loads(f.read())
 with open("data/vornamen.txt", encoding = "utf8") as f:
     vornamen = f.read().splitlines()
 with open("data/numerale.txt", encoding = "utf8") as f:
     numerale = f.read().splitlines()
+with open("data/adverbien.txt", encoding = "utf8") as f:
+    adverbien = f.read().splitlines()
 
+allezahlen = [num2words(i, lang="de") for i in range(0, 1000)]
 lsubstantive = list(substantive)
 lverben = list(verben)
 ladjektive = list(adjektive)
@@ -136,16 +142,25 @@ def flektiereSubstantiv(word, fp):
     return (retrieve(artikel, fp, g) + " " + retrieve(selbst, fp, g)).strip().replace("  ", " ")
 
 def flektiereAdjektiv(word, fp):
-    data = adjektive[word]
+    if fp.stamm:
+        return word
     endung = {
         numerus.singular: genus.dict(casus.dict(determination.dict("e", "er"), "en", "en", "en"), casus.dict("e", "en", "en", "e"), casus.dict(determination.dict("e", "es"), "en", "en", determination.dict("e", "es"))),
         numerus.plural: determination.dict("en", casus.dict("e", "er", "en", "e"))
     }
+    if word in adjektive:
+        data = adjektive[word]
+    else:
+        data = {"positiv": word, "komparativ": "-", "superlativ": "-"}
     stamm = {komparation.positiv: data["positiv"].rstrip("e"), komparation.komparativ: data["komparativ"], komparation.superlativ: data["superlativ"].rstrip("n").rstrip("e")}
     return (retrieve(stamm, fp) + retrieve(endung, fp)).strip().replace("  ", " ")
 
 def flektiereVerb(infinitiv, fp):
+    if fp == "partizip1":
+        return infinitiv + "d"
     data = verben[infinitiv]
+    if fp == "partizip2":
+        return data["flexion"]["partizip2"]
     def join(stamm, endung):
         if endung != "":
             if (stamm[-1] == "s" and endung[0] == "s") or (infinitiv[-2:] in ["ln", "rn"] and endung[0] == "e"):
@@ -274,20 +289,55 @@ def reflexivpronomen(fp):
     }
     return retrieve(d, fp)
 
-nextWord = {"feminin": [], "maskulin": [], "neutrum": [], "verb": [], "adjektiv": [], "vorname": [], "verbmitobjekt": []}
+# nextWord = {"feminin": [], "maskulin": [], "neutrum": [], "verb": [], "adjektiv": [], "vorname": [], "verbmitobjekt": [], "adverb": [], "numeral": []}
+allWords = {"verbmitobjekt": list(dictverbenmitobjekt.keys()),
+            "vorname": vornamen,
+            "feminin": lfeminin,
+            "maskulin": lmaskulin,
+            "neutrum": lneutrum,
+            "verb": lverben,
+            "adjektiv": ladjektive,
+            "adverb": adverbien,
+            "numeral": numerale + allezahlen
+}
+nextWord = {key: [] for key in allWords}
 
 def clearNext():
     for k in nextWord:
         nextWord[k] = []
 
 def setNext(word):
-    for s in [word, word.lower(), word.capitalize()]:
-        for t, l in [("verbmitobjekt", dictverbenmitobjekt), ("vorname", vornamen), ("feminin", lfeminin), ("maskulin", lmaskulin), ("neutrum", lneutrum), ("verb", verben), ("adjektiv", adjektive)]:
-            if s in l:
-                nextWord[t].append(s)
-                return True
-
+    if word.isnumeric():
+        nextWord["numeral"].append(num2words(int(word), lang="de"))
+        return True
+    # for s in [word, word.lower(), word.capitalize()]:
+    #     for key, value in random.sample(list(allWords.items()), len(allWords)):
+    #         if s in value:
+    #             nextWord[key].append(s)
+    #             return True
+    key, best, score = identifyFuzzy(word)
+    nextWord[key].append(best)
     return False
+
+fuzzyCache = {}
+
+def identifyFuzzy(string):
+    if "@" in string:
+        return ("vorname", string, 100.0)
+    if string in fuzzyCache:
+        return fuzzyCache[string]
+    extracted = []
+    for key, value in random.sample(list(allWords.items()), len(allWords)):
+        word, score = process.extractOne(string, value, scorer=fuzz.ratio)#, processor = lambda s: s.lower())
+        # print(key, score)
+        extracted.append((key, word, score))
+        if score == 100:
+            break
+    best = max(extracted, key = lambda x: x[2])
+    # print(best)
+    fuzzyCache[string] = best
+    return best
+    
 
 def randomVerbmitObjekt():
     word = random.choice(verbenmitobjekt)
@@ -301,8 +351,21 @@ def randomVorname():
         word = nextWord["vorname"].pop(0)
     return word
 
+def randomAdverb():
+    word = random.choice(adverbien)
+    if nextWord["adverb"]:
+        word = nextWord["adverb"].pop(0)
+    elif random.random() < 0.5 and nextWord["adjektiv"]:
+        word = nextWord["adjektiv"].pop(0)
+    return word
+
 def randomNumeral():
-    return random.choice(numerale)
+    word = random.choice(numerale)
+    if random.random() < 0.1:
+        word = num2words(random.randint(2, 1000), lang="de")
+    if nextWord["numeral"]:
+        word = nextWord["numeral"].pop(0)
+    return word
 
 def randomSubstantiv(fp):
     while True:

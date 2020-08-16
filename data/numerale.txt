@@ -42,6 +42,7 @@ neunundneunzig
 neunundsechzig
 neunzehn
 neunzig
+null
 sechs
 sechsundsechzig
 sechsundvierzig

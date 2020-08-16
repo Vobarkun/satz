@@ -13,6 +13,3 @@ def top():
 def f(word = ""):
     s = satz.satz(word)
     return "<h1>" + s + "<h1>"
-
-if __name__ == '__main__':
-    app.run()

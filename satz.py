@@ -3,6 +3,9 @@ import random
 import copy
 import json
 import re
+import sys
+from googletrans import Translator
+translator = Translator()
 
 def rchoice(enum, weights = None):
     if weights is None:
@@ -34,7 +37,7 @@ class Satz(Node):
             gleichzeitig = ["weil", "obwohl", "da", "bevor", "als", "bis", "ehe", "während", "falls", "indem", "obgleich", "obschon", "obzwar", "ohne dass", "sobald", "sodass", "wenn", "wohingegen"]
             vorzeitig = ["nachdem", "als", "sobald", "seitdem", "sowie", "seit"]
             vorzeit = {gr.tempus.präsens: gr.tempus.perfekt, gr.tempus.präteritum: gr.tempus.plusquamperfekt, gr.tempus.futur1: gr.tempus.futur2}
-            g = True if prädikat.fp.tempus in [gr.tempus.perfekt, gr.tempus.plusquamperfekt, gr.tempus.futur2] else random.choice([True, False])
+            g = True if prädikat.fp.tempus in [gr.tempus.perfekt, gr.tempus.plusquamperfekt, gr.tempus.futur2] else random.random() < 0.5
             subjunktion = random.choice(gleichzeitig if g else vorzeitig)
             nebensatz = Satz(gr.FP(satz = gr.satz.nebensatz, tempus = prädikat.fp.tempus if g else vorzeit[prädikat.fp.tempus]))
             self.text += ", " + subjunktion + " " + nebensatz.evaluate()
@@ -66,6 +69,12 @@ class Prädikat(Node):
             verbmo.remove("akkusativ")
             verbmo.insert(1, "sich")
 
+        if random.random() < 0.4:
+            i = 1
+            if "sich" in verbmo:
+                i = verbmo.index("sich") + 1
+            verbmo.insert(i, "adverb")
+
         objekttext = " "
         for obj in verbmo[1:]:
             if "akkusativ" == obj:
@@ -85,6 +94,10 @@ class Prädikat(Node):
                 objekttext += " zum " + infinitiv + " "
             elif "sich" == obj:
                 objekttext += " " + gr.reflexivpronomen(self.fp) + " "
+            elif "adverb" == obj:
+                adverbial = Adverbial(self.fp)
+                objekttext += " " + adverbial.evaluate() + " "
+        
 
         if self.fp.satz == gr.satz.hauptsatz:
             if not " " in self.text:
@@ -171,17 +184,42 @@ class Adjektiv(Node):
             self.fp.komparation = rchoice(gr.komparation, [50, 1, 1])
 
     def evaluate(self):
-        self.text = gr.randomAdjektiv(self.fp)
+        if random.random() < 0.5 and self.fp.komparation == gr.komparation.positiv:
+            self.text = gr.flektiereAdjektiv(gr.flektiereVerb(gr.randomVerb(), random.choice(["partizip1", "partizip2"])), self.fp)
+        else:
+            self.text = gr.randomAdjektiv(self.fp)
         return self.text
 
-def satz(theme = None):
+class Adverbial(Node):
+    def __init__(self, fp = gr.FP()):
+        super().__init__(fp)
+        
+    def evaluate(self):
+        if random.random() < 0.9:
+            self.text = gr.randomAdverb()
+        else:
+            adjektiv = Adjektiv(gr.FP(stamm=True))
+            self.text = adjektiv.evaluate()
+        return self.text
+
+def satz(theme = []):
+    if type(theme) is str:
+        theme = theme.split(",")
+    
+    dest = False
+    for t in theme:
+        if len(t) <= 2:
+            dest = t
+            break
+    if dest:
+        theme.remove(dest)
+
     l = 100000
     satz = "error"
     for i in range(1000):
         gr.clearNext()
-        if theme is not None:
-            for t in theme.split(","):
-                gr.setNext(t)
+        for t in theme:
+            gr.setNext(t)
         s = Satz().evaluate()
         nl = sum([len(e) for e in list(gr.nextWord.values())])
         if nl < l:
@@ -193,7 +231,13 @@ def satz(theme = None):
     satz = re.sub(" +,", ",", satz)
     satz = re.sub(",+", ",", satz)
     satz = satz[0].upper() + satz[1:] + "."
+    if dest:
+        try:
+            satz = translator.translate(satz, dest=dest).text
+        except Exception:
+            pass
     return satz
 
 if __name__ == "__main__":
-    print(satz())
+    for i in range(5):
+        print(satz(sys.argv[1] if len(sys.argv) > 1 else ""))
