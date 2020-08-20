@@ -307,6 +307,8 @@ def clearNext():
         nextWord[k] = []
 
 def setNext(word):
+    if not word:
+        return False
     if word.isnumeric():
         nextWord["numeral"].append(num2words(int(word), lang="de"))
         return True
