@@ -14,7 +14,6 @@ achtern
 achtmal
 allda
 alldieweil
-alle
 alle naselang
 alle naslang
 allein
@@ -56,9 +55,6 @@ anderweit
 andrerseits
 aneinander
 anfangs
-angst
-anhand
-anjetzt
 ansatzweise
 anscheinend
 ansonsten
@@ -66,14 +62,9 @@ anstandshalber
 anständigerweise
 anstandslos
 anwesend
-apropos
 arschling
 auch
-auf
-aufhin
-aufi
 aufwärts
-aus
 auseinander
 ausgangs
 ausgerechnet
@@ -107,7 +98,6 @@ beiseite
 beispielhalber
 beispielsweise
 beizeiten
-beizu
 bekanntermaßen
 bekannterweise
 bekanntlich
@@ -136,7 +126,6 @@ bloß
 blödsinnigerweise
 brockenweise
 circa
-crescendo
 da
 dabei
 dadrauf
@@ -152,7 +141,6 @@ dahinnen
 dahinten
 dahüben
 dahunten
-dalli
 damals
 damit
 danach
@@ -171,8 +159,6 @@ darum
 darunter
 daselbst
 dauernd
-dauß
-daußen
 davon
 davor
 dazu
@@ -197,7 +183,6 @@ deshalb
 dessen ungeachtet
 dessentwillen
 deswegen
-detto
 deutlichkeitshalber
 dichtauf
 dienstags
@@ -207,7 +192,6 @@ dieweil
 diktando
 diminuendo
 direttissimo
-dito
 doch
 donnerstags
 dort
@@ -216,19 +200,12 @@ dorthin
 dorthinan
 dortmals
 dortzulande
-dran
 drauf
 draußen
-drin
 drinnen
-droben
-drüben
-drüber
-drum
 drumherum
 drunten
 dummerweise
-durch
 durchaus
 durcheinander
 durchweg
@@ -240,12 +217,10 @@ ebendaselbst
 ebendort
 ebenfalls
 ebenso
-egal
 eh
 ehedem
 ehemals
 eher
-ehnder
 ehrenhalber
 ehrlicherweise
 eigenartigerweise
@@ -283,7 +258,6 @@ erwartungsgemäß
 esslöffelweise
 etwa
 etwas
-euertwillen
 eurerseits
 euretwillen
 eventualiter
@@ -922,36 +896,18 @@ weithin
 weniger
 wenigstens
 werktags
-weshalb
 westwärts
-weswegen
 wieder
 wiederum
-wieso
 winters
 wintersüber
 wirklich
 woanders
 woandershin
 wochenends
-wogegen
-woher
-woherum
-wohin
 wohl
-wohlan
-wohlauf
 wohlgemerkt
-womit
 womöglich
-wonach
-worauf
-woraufhin
-worein
-worin
-worüber
-woselbst
-wozu
 wunderbarerweise
 wunderlicherweise
 x-mal

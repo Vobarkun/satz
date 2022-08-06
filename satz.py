@@ -24,6 +24,8 @@ class Satz(Node):
         super().__init__(fp)
         if self.fp is None:
            self.fp = gr.FP(satz = gr.satz.hauptsatz)
+        if self.fp.satz is None:
+            self.fp.satz = gr.satz.hauptsatz
         if self.fp.numerus is None:
             self.fp.numerus = rchoice(gr.numerus)
         if self.fp.person is None:
@@ -41,6 +43,9 @@ class Satz(Node):
             subjunktion = random.choice(gleichzeitig if g else vorzeitig)
             nebensatz = Satz(gr.FP(satz = gr.satz.nebensatz, tempus = prädikat.fp.tempus if g else vorzeit[prädikat.fp.tempus]))
             self.text += ", " + subjunktion + " " + nebensatz.evaluate()
+        self.text = re.sub(" +", " ", self.text).strip()
+        self.text = re.sub(" +,", ",", self.text)
+        self.text = re.sub(",+", ",", self.text)
         return self.text
 
 class Prädikat(Node):
@@ -208,7 +213,7 @@ def satz(theme = []):
     
     dest = False
     for t in theme:
-        if len(t) <= 2:
+        if len(t) == 2 and not t in ["du", "er"]:
             dest = t
             break
     if dest:
@@ -218,18 +223,25 @@ def satz(theme = []):
     satz = "error"
     for i in range(1000):
         gr.clearNext()
+        fp = gr.FP()
         for t in theme:
-            gr.setNext(t)
-        s = Satz().evaluate()
+            if t.lower() in ["ich", "wir"]:
+                fp.person = gr.person.erste
+                fp.numerus = gr.numerus.singular if t.lower() == "ich" else gr.numerus.plural
+            elif t.lower() in ["ihr", "du"]:
+                fp.person = gr.person.zweite
+                fp.numerus = gr.numerus.singular if t.lower() == "du" else gr.numerus.plural
+            else: gr.setNext(t)
+        s = Satz(fp).evaluate()
         nl = sum([len(e) for e in list(gr.nextWord.values())])
         if nl < l:
             satz = s
             l = nl
         if l == 0:
             break
-    satz = re.sub(" +", " ", satz).strip()
-    satz = re.sub(" +,", ",", satz)
-    satz = re.sub(",+", ",", satz)
+    # satz = re.sub(" +", " ", satz).strip()
+    # satz = re.sub(" +,", ",", satz)
+    # satz = re.sub(",+", ",", satz)
     satz = satz[0].upper() + satz[1:] + "."
     if dest:
         try:
@@ -239,5 +251,5 @@ def satz(theme = []):
     return satz
 
 if __name__ == "__main__":
-    for i in range(5):
+    for i in range(20):
         print(satz(sys.argv[1] if len(sys.argv) > 1 else ""))

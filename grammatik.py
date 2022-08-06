@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import difflib
 from num2words import num2words
 from rapidfuzz import process, fuzz
+from copy import copy, deepcopy
 
 class Dictable:
     @classmethod
@@ -345,7 +346,7 @@ def randomVerbmitObjekt():
     word = random.choice(verbenmitobjekt)
     if nextWord["verbmitobjekt"]:
         word = dictverbenmitobjekt[nextWord["verbmitobjekt"].pop(0)]
-    return word
+    return deepcopy(word)
 
 def randomVorname():
     word = random.choice(vornamen)
